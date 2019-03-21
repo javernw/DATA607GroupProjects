@@ -7,6 +7,7 @@ output:
     theme: flatly
     highlight: pygments
     css: ./p3css.css
+    
 ---
 
 ```{r setup, include=FALSE}
@@ -37,7 +38,7 @@ library(leaflet)
   
   <h1 class="btn btn-info btn-block">Project 3</h1>
   <br />
-  <p class="lead">Project 3 on rpubs.com, SQL, R, scripts <br />and RMarkdown files uploaded on GitHub repo.<br />
+  <p class="lead">Project 3 on rpubs.com, SQL, R scripts <br />and RMarkdown files uploaded on GitHub repo.<br />
   </p>
   <hr class="my-4">Mia Siracusa &nbsp;&nbsp;
   <a class="btn btn-dark btn-lg" href="http://rpubs.com/miasiracusa" role="button">rpubs</a>
@@ -69,31 +70,32 @@ Chronic diseases represented seven of the top 10 causes of death in the United S
 
 The objective of this project is to practice soft skill working in a virtual team. During the project we practised collaborating, knowledge sharing and problem solving in a team remotely.
 
-# Approach
+## Approach
 
 For this project after having detailed discussion, we have decided to use US chronic disease indicators data proposed by Kleber (one of the team members).
 Using this dataset, we followed the following approach:
-1. Means of Communication: 
+
+  1. Means of Communication: 
     + We created a Whatsapp group where we can share documents and make a group   calls to discuss how we should do the project. 
     + For the purpose of sharing code and rough drafts we have utilized Github and Rpubs . 
-2. Separate / delegate the work among the team members.
-3. Each individual do their part of the work.
-4. Combine everyone's work to make a final work.
+  2. Separate / delegate the work among the team members.
+  3. Each individual do their part of the work.
+  4. Combine everyone's work to make a final work.
 
-# Motivation
+## Motivation
 
 Our motivation behind working as a team is due to the necessity of being able to effectively collaborate in a virtual environment . Working in a virtual team is essential  as it will enhance two of the basic data science soft skills (communiction and collaboration). Nowadays people prefer a more flexible work schedule and working from home due to the inherent desire of maintaing work and life balance. This project has enabled us to practice how to mantain work and life balance working in a virtual team.
 
-# Data information
+## Data information
 The Dataset has 124 indicators that are divided in 18 groups. ![Indicator Groups](C:/Users/Javern/Documents/Data Science MS/DATA607/cdi.png)
 
-# Data source
+## Data source
 The data was downloaded from the Center For Diseases Control and Prevention [website](https://chronicdata.cdc.gov/Chronic-Disease-Indicators/U-S-Chronic-Disease-Indicators-CDI-/g4ie-h725) in csv format.
 
 
-# How to load it
+## How to load Dataset
 
-## Load [data source](https://catalog.data.gov/dataset/u-s-chronic-disease-indicators-cdi) into an R dataframe using MySQL RDBMS
+We loaded the [data](https://catalog.data.gov/dataset/u-s-chronic-disease-indicators-cdi) into an R dataframe using MySQL RDBMS
 ```{r}
 # 2. variables Settings
 db_user <- 'newuser'
@@ -114,56 +116,52 @@ This is a snapshot of the loaded dataset showing the indicator groups and the st
 ```{r}
 #uf <- df %>% gather(Year, n, YearStart:YearEnd)
 kable(df) %>%
-  kable_styling() %>%
+  kable_styling("striped", "hovered") %>%
   scroll_box(height = "500px")
 ```
 
+<br/>We also loaded the data using read.csv for the purpose of indicating missing values of empty strings with an identifier
 ```{r}
-mydb <-  dbConnect(MySQL(), user = db_user, password = db_password,
-                 dbname = db_name, host = db_host, port = db_port)
-s <- paste0("SELECT * FROM USChronicDiseaseIndicators;")
-rs <- dbSendQuery(mydb, s)
-disease <-  fetch(rs, n = -1)
-on.exit(dbDisconnect(mydb))
- 
+disease <- read.csv("US_CDI.csv", na.strings = "")
 ```
 
-# Overview of the data
+## Overview of the data
 ```{r}
 glimpse(disease)
 ```
 There are 519,718 observations and 34 variables. 
 
 ```{r}
-data.table(head(disease, 50))
+kable(head(disease, 10)) %>% kable_styling(font_size = 10) %>% scroll_box(height = "500px")
 ```
 
 ```{r}
-data.table(tail(disease, 50))
+kable(tail(disease, 10)) %>% kable_styling(font_size = 10) %>% scroll_box(height = "500px")
 ```
 
-Table of summary Statistics
+### Table of summary Statistics
 ```{r}
 summary(disease)
 ```
-## Visualization of missing value pattern. 
+
+### Visualization of missing value pattern. 
 From the data set we can visualize the missing value pattern. Read areas of the following graph indicated missing values. 
 ```{r}
 missmap(disease)
 ```
 
-From the summary statistics and missing value plot we can see that the data set has 37% missing values and most of them are in the following variables
+<br/>From the summary statistics and missing value plot we can see that the data set has 37% missing values and most of them are in the following variables
 ```{r}
 names(-which(colMeans(is.na(disease))>0.1))
 ```
 
-# Count number of missing values in each column
+#### Count number of missing values in each column
 ```{r}
 lapply(disease, function(x){sum(is.na(x))})
 ```
 
 
-# Tidying and Transformation
+## Tidying and Transformation
 
 Drop columns that have more than 10% missing
 ```{r}
@@ -175,7 +173,7 @@ After dropping the columns with more than 10% missing values we saw how much the
 dim(disease_no_miss)
 
 kable(head(disease_no_miss, 200)) %>%
-  kable_styling(bootstrap_options = "striped") %>%
+  kable_styling(bootstrap_options = "striped", font_size = 10) %>%
   scroll_box(height = "500px")
 ```
 
@@ -187,7 +185,7 @@ glimpse(disease_no_miss)
 
 
 
-# Exploratory Data Analysis
+## Exploratory Data Analysis
 
 ### Top 5 location with chronic disease
 ```{r}
@@ -205,7 +203,7 @@ disease_no_miss %>%
 ```
 
 
-Top 5 Data Source with chronic disease
+### Top 5 Data Source with chronic disease
 ```{r}
 disease_no_miss %>%
     count(DataSource)%>%
@@ -213,7 +211,7 @@ disease_no_miss %>%
     head(5) %>% kable() %>% kable_styling()
 ```
 
-Bottom 5 Data Source with chronic disease
+### Bottom 5 Data Source with chronic disease
 ```{r}
 disease_no_miss %>%
     count(DataSource)%>%
@@ -221,7 +219,7 @@ disease_no_miss %>%
     head(5) %>% kable() %>% kable_styling()
 ```
 
-## Bar plot of Chronic Diseases
+### Bar plot of Chronic Diseases
 ```{r}
 topic <- as.data.frame(table(disease_no_miss$Topic))
 ggplot(topic, aes(x=Var1, y =Freq, color = Var1))+
@@ -237,7 +235,7 @@ disease_no_miss %>%
     head(5) %>% kable() %>% kable_styling()
 ```
 
-Visualization of data value type
+### Visualization of data value type
 ```{r}
 data_value_type <- as.data.frame(table(disease_no_miss$DataValueType))
 
@@ -245,7 +243,7 @@ ggplot(data_value_type, aes(x=Var1, y =Freq))+
   geom_bar(stat="identity") + ggtitle("Distribution of Data Value Types") + theme(legend.position = "none") + coord_flip() + xlab("Data Value Types")
 ```
 
-Top data value types are the following
+### Top data value types are the following
 ```{r}
 disease_no_miss %>%
     count(DataValueType)%>%
@@ -253,7 +251,7 @@ disease_no_miss %>%
     head(5) %>% kable() %>% kable_styling()
 ```
 
-Stratification Category
+### Stratification Category
 ```{r}
 stratificationCat <- as.data.frame(table(disease_no_miss$StratificationCategory1))
 
@@ -268,7 +266,7 @@ ggplot(stratificationCat, aes(x=Var1, y =Freq, fill = Var1))+
 We decided to take a closer look at one of the top 5 causes of chronic diseases.
 
 
-## Tobacco
+### Tobacco
 As mentioned earlier, Tobacco is one of the top Chronic Disease Indicator of preventable deaths in the US. Smoking leads to disease and disability and harms nearly every organ of the body. Among the other indicator groups, using Tobacco is related to *cancer, heart disease, stroke, lung diseases, diabetes, and chronic obstructive pulmonary disease (COPD), which includes emphysema and chronic bronchitis*. You can view further details [<span style="color:blue">here</span> ](https://www.cdc.gov/tobacco/data_statistics/fact_sheets/fast_facts/index.htm)
 
 </div>
@@ -278,7 +276,12 @@ As mentioned earlier, Tobacco is one of the top Chronic Disease Indicator of pre
 
 ```{r}
 
-tblTobacco <- subset(disease_no_miss, Topic == "Tobacco" & (!LocationAbbr == "US"))
+mydb <-  dbConnect(MySQL(), user = db_user, password = db_password,
+                 dbname = db_name, host = db_host, port = db_port)
+s <- paste0("SELECT * FROM USChronicDiseaseIndicators WHERE Topic = 'Tobacco' AND LocationAbbr <> 'US';")
+rs <- dbSendQuery(mydb, s)
+tblTobacco <-  fetch(rs, n = -1)
+on.exit(dbDisconnect(mydb))
 
 Tobacco_df <- tblTobacco
 dim(Tobacco_df)
@@ -287,8 +290,9 @@ kable(head(Tobacco_df, 20)) %>% kable_styling(bootstrap_options = "striped", ful
 
 
 ```{r}
+Tobacco_df <- Tobacco_df[!sapply(Tobacco_df, function(t) all(t == ""))]
+Tobacco_df <- Tobacco_df %>% select("YearEnd", "LocationAbbr", "Question", "DataValue", "Stratification1", ResponseID) %>% separate(ResponseID, c("Latitude", "Longitude"), sep = ",")
 
-Tobacco_df <- Tobacco_df %>% select("YearEnd", "LocationAbbr", "Question", "DataValue", "Stratification1", "GeoLocation") %>% separate(GeoLocation, c("Latitude", "Longitude"), sep = ",")
 #remove none digit elements from the observations in both longitude and latitude columns and then convert remaining characters to numeric
 Tobacco_df$Latitude <- as.numeric(unlist(str_remove(Tobacco_df$Latitude, "^[(]"))) 
 Tobacco_df$Longitude <- as.numeric(unlist(str_remove(Tobacco_df$Longitude, "[)]$")))
@@ -305,7 +309,7 @@ dim(Tobacco_df)
 kable(head(Tobacco_df, 100)) %>% kable_styling(font_size = 10) %>%  scroll_box(height = "500px")
 ```
 
-### Questions observed
+#### Questions observed
 These are the type of questions looked at concerning Tobacco
 ```{r}
 Questions <- unique(Tobacco_df$Question)
@@ -329,7 +333,7 @@ dim(new_Tobacco_df)
 <br />
 <div class="jumbotron jumbotron-fluid">
 
-### Exploration of Tobacco
+#### Exploration of Tobacco
 
 ```{r}
 ggplotly(ggplot(new_Tobacco_df, aes(x=State, y=Year, fill=Year)) +
@@ -351,9 +355,9 @@ new_Tobacco_df %>% filter(!Stratification == "Overall") %>%  ggplot(aes(x= Strat
 ```
 Based on this research, most of Tobacco customers are Male and the top race is White.
 
-### Amount of Tobacco Product Excise Tax?
+#### Amount of Tobacco Product Excise Tax?
 
-Increasing the price of tobacco discourages people from buying them, especially youths. With this structure put into place, improvements in health will get better in the long term. Majority of the states did not excise tax from the Tobacco product.
+##### Increasing the price of tobacco discourages people from buying them, especially youths. With this structure put into place, improvements in health will get better in the long term. Majority of the states did not excise tax from the Tobacco product.
 ```{r}
 Tobacco_df2 %>%  filter(Question == "Amount of tobacco product excise tax") %>% ggplot(aes(x = DataValue)) + geom_bar() 
 ```
@@ -364,8 +368,8 @@ Tobacco_df2 %>%  filter(Question == "Amount of tobacco product excise tax") %>% 
 
 <div class="jumbotron jumbotron-fluid">
 
-### States that allow stronger local tobacco control and prevention laws
-<br/> Map below shows which States did and did not allow stronger laws.
+#### States that allow stronger local tobacco control and prevention laws
+##### Map below shows which States did and did not allow stronger laws.
 ```{r}
 Tobacco_df2 %>%  filter(Question == "States that allow stronger local tobacco control and prevention laws") %>% ggplot(aes(x = DataValue)) + geom_bar() 
 ggmap::register_google(key = "AIzaSyAPKYO8wG3mQUqSL6Ym4HeSIjkZmCwwVP8")
