@@ -44,7 +44,7 @@ CREATE TABLE USChronicDiseaseIndicators (
   StratificationCategoryID3 varchar(20),
   StratificationID3 varchar(20)
   );
-    
+-- comment out lines 48 - 53 if using remote server    
 LOAD DATA INFILE 'C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/SQL/US_CDI.csv' 
 INTO TABLE USChronicDiseaseIndicators 
 FIELDS TERMINATED BY ',' 
