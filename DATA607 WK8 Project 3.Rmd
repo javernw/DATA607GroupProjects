@@ -166,10 +166,10 @@ We loaded the [data](https://catalog.data.gov/dataset/u-s-chronic-disease-indica
 
 ```{r}
 # 2. variables Settings
-db_user <- 'newuser'
-db_password <- 'pass'
+db_user <- 'data607user' #newuser
+db_password <- 'pass' 
 db_name <- 'uscdi'
-db_host <- '127.0.0.1' # localhost for local access
+db_host <- '35.226.130.145' # for remote access. change to 12.0.0.1 for local access
 db_port <- 3306
 # 3. Read data from db
 mydb <-  dbConnect(MySQL(), user = db_user, password = db_password,
