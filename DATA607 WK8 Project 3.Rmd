@@ -1,6 +1,6 @@
 ---
 title: "DATA 607 Project 3 <br /> Most Valued Data Science Skills"
-author: "[Team CUNY VERSE - `r format(Sys.Date(), '%B %d, %Y')`](https://www.linkedin.com/in/kleberperez/)"
+author: "[Team CUNY VERSE - `r format(Sys.Date(), '%B %d, %Y')`](https://www.linkedin.com/in/javernwilson/)"
 output: 
   html_document:
     toc: true
