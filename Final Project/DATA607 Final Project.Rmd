@@ -1,0 +1,359 @@
+---
+title: "Untitled"
+author: "Javern Wilson"
+date: "May 8, 2019"
+output: html_document
+---
+
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(reshape2)
+library(kableExtra)
+library(rvest)
+library(XML)
+library(RCurl)
+library(tm)
+library(pdftools)
+
+```
+Air Quality Dataset
+
+For this project, we will only focus on the boroughs and the neighborhoods
+```{r}
+
+air_quality <- read.csv(file.choose(), header = T) #Air_Quality.csv
+air_q <- air_quality
+air_q <- air_q[complete.cases(air_q), ]
+air_q <- air_q %>%  select(-indicator_data_id, -indicator_id, -year_description)
+air_q <- filter(air_q, geo_type_name == c("Borough", "UHF42"))
+
+
+```
+
+Categories considered when analysing air quality.
+```{r}
+airq_cat <- air_q %>% select(name) %>% distinct()
+
+kable(airq_cat) %>% kable_styling(bootstrap_options = "striped" ,font_size = 12) %>% scroll_box(height = "500px")
+
+```
+
+Collect Zipcode and Matching Neighborhood with UFH42 Code
+```{r}
+link <- "https://www.health.ny.gov/statistics/cancer/registry/appendix/neighborhoods.htm"
+
+zip_table <- link %>% read_html() %>% html_nodes("table") %>% html_table(fill = T) %>% data.frame(stringsAsFactors = F)
+
+#add UFH42 code column
+zip_table$NCode <- c(105, 103, 106, 107, 101, 102, 104, 203, 209, 206, 208, 210, 202, 207, 204, 201, 205, 211, 302, 306, 303, 307, 308, 310, 309, 305, 304, 301, 404, 403, 406, 408, 401, 405, 410, 409, 407, 402, 501, 503, 502, 504)
+
+#re-arrange columns
+zip_table <- zip_table[, c(1,4,2,3)]
+
+```
+
+Collect Rent Prices for each Neighborhood and Borough
+
+```{r eval=FALSE, include=FALSE}
+
+### Bronx
+
+bronx_url<-paste0("https://www.apartments.com/bronx-ny/", 1:20)
+
+bronx <- lapply(bronx_url,
+                function(pg){
+                  pg %>% read_html() %>% 
+                    html_nodes("#placards") %>% 
+                    html_text() %>%
+                    str_extract_all("\\$\\d.\\d+")
+                })
+bronx <- parse_number(unlist(bronx))
+
+Bxurl1 <- "https://www.apartments.com/mount-hope-bronx-ny/"
+central_bronx <- Bxurl1 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()
+
+Bxurl2 <- "https://www.apartments.com/fordham-heights-bronx-ny/"
+fordham <- Bxurl2 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()
+
+Bxurl3 <- "https://www.apartments.com/highbridge-bronx-ny/"
+high_bridge <- Bxurl3 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()%>% mean()
+
+Bxurl4 <- "https://www.apartments.com/mount-hope-bronx-ny/"
+huntspoint <- Bxurl4 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()
+
+Bxurl5 <- "https://www.apartments.com/kingsbridge-bronx-ny/"
+kingsbridge <- Bxurl5 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()
+
+Bxurl6 <- "https://www.apartments.com/mount-hope-bronx-ny/"
+north_eastbx <- Bxurl6 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()
+
+Bxurl7 <- "https://www.apartments.com/parkchester-bronx-ny/"
+south_eastbx <- Bxurl7 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()
+
+
+####Brooklyn
+
+
+brooklyn_url<-paste0("https://www.apartments.com/brooklyn-ny/", 1:20)
+
+brooklyn <- lapply(brooklyn_url,
+                function(pg){
+                  pg %>% read_html() %>% 
+                    html_nodes("#placards") %>% 
+                    html_text() %>%
+                    str_extract_all("\\$\\d.\\d+")
+                })
+brooklyn <- parse_number(unlist(brooklyn))
+
+Burl1 <- "https://www.apartments.com/crown-heights-brooklyn-ny/"
+central_brooklyn <- Burl1 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number() %>% mean()
+
+Burl2 <- "https://www.apartments.com/southwest-brooklyn-brooklyn-ny/"
+sw_brooklyn <- Burl2 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()
+
+Burl3 <- "https://www.apartments.com/borough-park-brooklyn-ny/"
+borough_park <- Burl3 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()
+
+Burl4 <- "https://www.apartments.com/flatlands-brooklyn-ny/"
+canarsie_flatlands <- Burl4 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()
+
+Burl5 <- "https://www.apartments.com/coney-island-brooklyn-ny/"
+south_brooklyn <- Burl5 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()
+
+Burl6 <- "https://www.apartments.com/park-slope-brooklyn-ny/?bb=62kx98lnvHihhqwB"
+nw_brooklyn <- Burl6 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()
+
+Burl7 <- "https://www.apartments.com/flatbush-brooklyn-ny/"
+flatbush <- Burl7 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()
+
+Burl8 <- "https://www.apartments.com/east-new-york-brooklyn-ny/"
+east_ny <- Burl8 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()
+
+Burl9 <- "https://www.apartments.com/greenpoint-brooklyn-ny/"
+greenpoint <- Burl9 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()
+
+Burl10 <- "https://www.apartments.com/sunset-park-brooklyn-ny/"
+sunset_park<- Burl10 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()
+
+Burl11 <- "https://www.apartments.com/bushwick-brooklyn-ny/"
+bushwick <- Burl11 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()
+
+
+
+
+#### Manhattan
+
+manhattan_url <-paste0("https://www.apartments.com/brooklyn-ny/", 1:20)
+
+manhattan <- lapply(manhattan_url,
+                function(pg){
+                  pg %>% read_html() %>% 
+                    html_nodes("#placards") %>% 
+                    html_text() %>%
+                    str_extract_all("\\$\\d.\\d+")
+                })
+manhattan <- parse_number(unlist(manhattan))
+
+Murl1 <- "https://www.apartments.com/central-harlem-new-york-ny/"
+central_harlem <- Murl1 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()
+
+Murl2 <- "https://www.apartments.com/chelsea-new-york-ny/"
+chelsea_clinton <- Murl2 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()
+
+Murl3 <- "https://www.apartments.com/east-harlem-new-york-ny/"
+east_harlem <- Murl3 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()
+
+Murl4 <- "https://www.apartments.com/gramercy-park-new-york-ny/"
+gramercy_murray <- Murl4 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()
+
+Murl5 <- "https://www.apartments.com/greenwich-village-new-york-ny/"
+greenwich_soho <- Murl5 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()
+
+Murl6 <- "https://www.apartments.com/lower-manhattan-new-york-ny/"
+lower_manhattan <- Murl6 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()
+
+Murl7 <- "https://www.apartments.com/lower-east-side-new-york-ny/"
+lower_east <- Murl7 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()
+
+Murl8 <- "https://www.apartments.com/upper-east-side-new-york-ny/"
+upper_east <- Murl8 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()
+
+Murl9 <- "https://www.apartments.com/upper-west-side-new-york-ny/"
+upper_west <- Murl9 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()
+
+Murl10 <- "https://www.apartments.com/washington-heights-new-york-ny/"
+inwood_washington <- Murl10 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()
+
+### Queens
+
+queens_url <-paste0("https://www.apartments.com/queens-ny/", 1:20)
+
+queens <- lapply(queens_url,
+                function(pg){
+                  pg %>% read_html() %>% 
+                    html_nodes("#placards") %>% 
+                    html_text() %>%
+                    str_extract_all("\\$\\d.\\d+")
+                })
+queens <- parse_number(unlist(queens))
+
+Qurl1 <- "https://www.apartments.com/northeast-queens-flushing-ny/"
+north_east <- Qurl1 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()
+
+Qurl2 <- "https://www.apartments.com/bayside-ny/"
+north <- Qurl2 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()
+
+Qurl3 <- "https://www.apartments.com/central-queens-queens-ny/"
+central <- Qurl3 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()
+
+Qurl4 <- "https://www.apartments.com/southeast-queens-jamaica-ny/"
+jamaica <- Qurl4 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()
+
+Qurl5 <- "https://www.apartments.com/long-island-city-ny/"
+north_west <- Qurl5 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()
+
+Qurl6 <- "https://www.apartments.com/forest-hills-ny/"
+west_central <- Qurl6 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()
+
+Qurl7 <- "https://www.apartments.com/south-shore-queens-far-rockaway-ny/"
+rockaway <- Qurl7 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()
+
+Qurl8 <- "https://www.apartments.com/hollis-ny/"
+south_east <- Qurl8 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()
+
+Qurl9 <- "https://www.apartments.com/howard-beach-ny/"
+south_west <- Qurl9 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()
+
+Qurl10<- "https://www.apartments.com/northeast-queens-flushing-ny/"
+west <- Qurl10 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()
+
+
+
+#### Staten Island
+
+SI_url <-paste0("https://www.apartments.com/staten-island-ny/", 1:20)
+
+Staten_Island <- lapply(SI_url,
+                function(pg){
+                  pg %>% read_html() %>% 
+                    html_nodes("#placards") %>% 
+                    html_text() %>%
+                    str_extract_all("\\$\\d.\\d+")
+                })
+Staten_Island <- parse_number(unlist(Staten_Island))
+
+Surl1 <- "https://www.apartments.com/port-richmond-staten-island-ny/"
+port_richmond <- Surl1 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()
+
+Surl2 <- "https://www.apartments.com/stapleton-staten-island-ny/"
+stapleton <- Surl2 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()
+
+Surl3 <- "https://www.apartments.com/staten-island-ny-10306/"
+south_shore <- Surl3 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()
+
+Surl4 <- "https://www.apartments.com/staten-island-ny-10314/"
+mid_island <- Surl4 %>% read_html() %>%  html_node("#placards") %>%
+    html_text() %>% str_extract_all("\\$\\d.\\d+") %>% unlist() %>% parse_number()%>% mean()
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+Collect Neighborhood and Matching UFH42 Code from pdf file on web
+```{r}
+file <- 'http://a816-dohbesp.nyc.gov/IndicatorPublic/EPHTPDF/uhf42.pdf'
+
+
+text <- pdf_text(file)
+text2 <- strsplit(text, "\n")
+ufh42_codes <- text2 %>% 
+  str_extract_all(pattern = "\\d{3}") %>% 
+  unlist() %>% 
+  parse_number() %>% 
+  unique() %>% 
+ sort()
+  
+
+ufh42_names <- gsub("NYC UHF 42 Neighborhoods", "", text2)
+ufh42_names <- gsub("UHF Neighborhood Name", "", ufh42_names)
+ufh42_names <- gsub("UHF Code", "", ufh42_names)
+ufh42_names <- gsub("Neighborhood Definition:.+", "", ufh42_names)
+ufh42_names <- gsub("\\d{3}", "", ufh42_names)
+ufh42_names <- unlist(str_extract_all(ufh42_names, "(\\s[A-Za-z]+.\\-?.[A-Za-z]+.\\-?.[A-Za-z]+.[A-Za-z]+.\\-?.[A-Za-z]+| Jamaica| Rockaway| Sunset Park)"))
+ufh42_names <- gsub("\\\\r", "", ufh42_names)
+
+neighborhood <- data.frame(Code = ufh42_codes, Location = ufh42_names, stringsAsFactors = F)
+
+#write.csv(neighborhood, file = "Neighborhood.csv", row.names = F)
+
+```
+
+UFH42 Codes and Rent Prices
+
+```{r}
+Rent_prices <- c(central_bronx, fordham, high_bridge, huntspoint, kingsbridge, north_eastbx, south_eastbx, central_brooklyn, sw_brooklyn, borough_park, canarsie_flatlands, south_brooklyn, nw_brooklyn, flatbush, east_ny, greenpoint, sunset_park, bushwick, central_harlem, chelsea_clinton, east_harlem, gramercy_murray, greenwich_soho, lower_manhattan, lower_east, upper_east, upper_west, inwood_washington, north_east, north, central, jamaica, north_west, west_central, rockaway, south_east, south_west, west, port_richmond, stapleton, south_shore, mid_island)
+
+rent <- data.frame(UFH42Code = zip_table$NCode, avg_Rentprice = Rent_prices, stringsAsFactors = F)
+
+#write.csv(rent, file = "Rent.csv", row.names = F)
+
+```
+
+Create new data table
+```{r}
+
+air_rent <- inner_join(air_q, rent, by = c("geo_entity_id" = "UFH42Code"))
+
+#write.csv(air_rent, file = "Air_Rent.csv", row.names = F)
+
+```
+
