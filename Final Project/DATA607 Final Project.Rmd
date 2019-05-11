@@ -1,5 +1,5 @@
 ---
-title: "Untitled"
+title: "DATA607 Final Project"
 author: "Javern Wilson"
 date: "May 8, 2019"
 output: html_document
@@ -17,14 +17,16 @@ library(tm)
 library(pdftools)
 
 ```
-Air Quality Dataset
+## Import and Clean
 
-For this project, we will only focus on the boroughs and the neighborhoods
+At first the [Air_Quality](https://github.com/javernw/DATA607GroupProjects/blob/master/Final%20Project/Air_Quality.csv) data is read into R. Any rows that are not completed is removed. For this project, we will only focus on the boroughs and the neighborhoods within. UHF42
 ```{r}
 
-air_quality <- read.csv(file.choose(), header = T) #Air_Quality.csv
-air_q <- air_quality
-air_q <- air_q[complete.cases(air_q), ]
+air_quality <- read.csv("https://raw.githubusercontent.com/javernw/DATA607GroupProjects/master/Final%20Project/Air_Quality.csv", header = T) #Air_Quality.csv
+air_q <- air_quality #use a secondary variable for analysis
+air_q <- air_q[complete.cases(air_q), ] #only keep full rows
+
+#columns not needed for analysis is removed
 air_q <- air_q %>%  select(-indicator_data_id, -indicator_id, -year_description)
 air_q <- filter(air_q, geo_type_name == c("Borough", "UHF42"))
 
@@ -39,13 +41,13 @@ kable(airq_cat) %>% kable_styling(bootstrap_options = "striped" ,font_size = 12)
 
 ```
 
-Collect Zipcode and Matching Neighborhood with UFH42 Code
+Collect Zipcode and Matching Neighborhood with UHF42 Code
 ```{r}
 link <- "https://www.health.ny.gov/statistics/cancer/registry/appendix/neighborhoods.htm"
 
 zip_table <- link %>% read_html() %>% html_nodes("table") %>% html_table(fill = T) %>% data.frame(stringsAsFactors = F)
 
-#add UFH42 code column
+#add UHF42 code column
 zip_table$NCode <- c(105, 103, 106, 107, 101, 102, 104, 203, 209, 206, 208, 210, 202, 207, 204, 201, 205, 211, 302, 306, 303, 307, 308, 310, 309, 305, 304, 301, 404, 403, 406, 408, 401, 405, 410, 409, 407, 402, 501, 503, 502, 504)
 
 #re-arrange columns
@@ -308,14 +310,14 @@ mid_island <- Surl4 %>% read_html() %>%  html_node("#placards") %>%
 ```
 
 
-Collect Neighborhood and Matching UFH42 Code from pdf file on web
+Collect Neighborhood and Matching UHF42 Code from pdf file on web
 ```{r}
 file <- 'http://a816-dohbesp.nyc.gov/IndicatorPublic/EPHTPDF/uhf42.pdf'
 
 
 text <- pdf_text(file)
 text2 <- strsplit(text, "\n")
-ufh42_codes <- text2 %>% 
+uhf42_codes <- text2 %>% 
   str_extract_all(pattern = "\\d{3}") %>% 
   unlist() %>% 
   parse_number() %>% 
@@ -323,35 +325,35 @@ ufh42_codes <- text2 %>%
  sort()
   
 
-ufh42_names <- gsub("NYC UHF 42 Neighborhoods", "", text2)
-ufh42_names <- gsub("UHF Neighborhood Name", "", ufh42_names)
-ufh42_names <- gsub("UHF Code", "", ufh42_names)
-ufh42_names <- gsub("Neighborhood Definition:.+", "", ufh42_names)
-ufh42_names <- gsub("\\d{3}", "", ufh42_names)
-ufh42_names <- unlist(str_extract_all(ufh42_names, "(\\s[A-Za-z]+.\\-?.[A-Za-z]+.\\-?.[A-Za-z]+.[A-Za-z]+.\\-?.[A-Za-z]+| Jamaica| Rockaway| Sunset Park)"))
-ufh42_names <- gsub("\\\\r", "", ufh42_names)
+uhf42_names <- gsub("NYC UHF 42 Neighborhoods", "", text2)
+uhf42_names <- gsub("UHF Neighborhood Name", "", uhf42_names)
+uhf42_names <- gsub("UHF Code", "", uhf42_names)
+uhf42_names <- gsub("Neighborhood Definition:.+", "", uhf42_names)
+uhf42_names <- gsub("\\d{3}", "", uhf42_names)
+uhf42_names <- unlist(str_extract_all(uhf42_names, "(\\s[A-Za-z]+.\\-?.[A-Za-z]+.\\-?.[A-Za-z]+.[A-Za-z]+.\\-?.[A-Za-z]+| Jamaica| Rockaway| Sunset Park)"))
+uhf42_names <- gsub("\\\\r", "", uhf42_names)
 
-neighborhood <- data.frame(Code = ufh42_codes, Location = ufh42_names, stringsAsFactors = F)
+neighborhood <- data.frame(Code = uhf42_codes, Location = uhf42_names, stringsAsFactors = F)
 
 #write.csv(neighborhood, file = "Neighborhood.csv", row.names = F)
 
 ```
 
-UFH42 Codes and Rent Prices
+UHF42 Codes and Rent Prices
 
 ```{r}
 Rent_prices <- c(central_bronx, fordham, high_bridge, huntspoint, kingsbridge, north_eastbx, south_eastbx, central_brooklyn, sw_brooklyn, borough_park, canarsie_flatlands, south_brooklyn, nw_brooklyn, flatbush, east_ny, greenpoint, sunset_park, bushwick, central_harlem, chelsea_clinton, east_harlem, gramercy_murray, greenwich_soho, lower_manhattan, lower_east, upper_east, upper_west, inwood_washington, north_east, north, central, jamaica, north_west, west_central, rockaway, south_east, south_west, west, port_richmond, stapleton, south_shore, mid_island)
 
-rent <- data.frame(UFH42Code = zip_table$NCode, avg_Rentprice = Rent_prices, stringsAsFactors = F)
+rent <- data.frame(UHF42Code = zip_table$NCode, avg_Rentprice = Rent_prices, stringsAsFactors = F)
 
-#write.csv(rent, file = "Rent.csv", row.names = F)
+#write.csv(rent, file = "Rent.csv", row.names = F) #store file
 
 ```
 
 Create new data table
 ```{r}
 
-air_rent <- inner_join(air_q, rent, by = c("geo_entity_id" = "UFH42Code"))
+air_rent <- inner_join(air_q, rent, by = c("geo_entity_id" = "UHF42Code"))
 
 #write.csv(air_rent, file = "Air_Rent.csv", row.names = F)
 
