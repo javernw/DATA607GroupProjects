@@ -31,7 +31,7 @@ library(gridExtra)
 ## Introduction
 
  
-Air quality serves as an important indicator for monitoring progress toward achieving a sustainable and healthy future. Enhancements in air quality are a direct indication of achievements in sustainable energy, urban development, and infrastructure. On the contrary, exposure to dangerous air pollutants can lead to chronic diseases, such as asthma, especially in children. We are interested in exploring the relationship between air quality and rent prices of NYC neighborhoods.
+Air quality serves as an important indicator for monitoring progress toward achieving a sustainable and healthy future. Enhancements in air quality are a direct indication of achievements in sustainable energy, urban development, and infrastructure. On the contrary, exposure to dangerous air pollutants can lead to chronic diseases, such as asthma, especially in children. We are interested in exploring the relationship between air quality and rent prices of NYC neighborhoods. In order for us to see this task through, we obtain our air quality dataset (CSV file) from [NYC OpenData](https://data.cityofnewyork.us/Environment/Air-Quality/c3uy-2p5r) and scraped the rent prices from [Apartments.com](https://www.apartments.com/).
 
 
 
@@ -320,7 +320,7 @@ mid_island <- Surl4 %>% read_html() %>%  html_node("#placards") %>%
 ```
 
 
-#### Collect Neighborhood and Matching UHF42 Code from pdf file on web
+#### Collect Neighborhood and Matching UHF42 Code from [.pdf](http://a816-dohbesp.nyc.gov/IndicatorPublic/EPHTPDF/uhf42.pdf) file on web
 ```{r}
 file <- 'http://a816-dohbesp.nyc.gov/IndicatorPublic/EPHTPDF/uhf42.pdf'
 
